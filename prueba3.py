@@ -1,4 +1,5 @@
 import tkinter as tk
+from PIL import Image, ImageTk
 
 class MouseCatGame:
     def __init__(self, root):
@@ -9,11 +10,11 @@ class MouseCatGame:
         self.Min = "G"   # Representamos al gato con 'G'
         self.mouse_pos = (0, 0)  # El ratón comienza en la esquina superior izquierda
         self.cat_pos = (2, 2)    # El gato comienza en la esquina inferior derecha
+        self.mouse_image = ImageTk.PhotoImage(Image.open("mouse.png"))  # Carga la imagen del ratón
+        self.cat_image = ImageTk.PhotoImage(Image.open("cat.png"))      # Carga la imagen del gato
         self.board[self.mouse_pos[0]][self.mouse_pos[1]] = self.Max
         self.board[self.cat_pos[0]][self.cat_pos[1]] = self.Min
-        
-        self.mouse_image = tk.PhotoImage(file="mouse.png")
-        self.cat_image = tk.PhotoImage(file="cat.png")
+        self.turn = self.Max  # El ratón empieza primero
         self.create_board()
 
     def create_board(self):
@@ -25,7 +26,7 @@ class MouseCatGame:
                 self.buttons[i][j] = button
 
     def on_button_click(self, i, j):
-        if self.board[i][j] == ' ' and self.is_valid_move(self.mouse_pos, (i, j)):
+        if self.turn == self.Max and self.board[i][j] == ' ' and self.is_valid_move(self.mouse_pos, (i, j)):
             self.board[self.mouse_pos[0]][self.mouse_pos[1]] = ' '
             self.mouse_pos = (i, j)
             self.board[i][j] = self.Max
@@ -35,15 +36,15 @@ class MouseCatGame:
                 self.show_winner(self.Max)
                 return
 
-            self.mouse_turn = False
-            self.root.after(100, self.ai_move)  # Mover el gato inmediatamente después del ratón
+            self.turn = self.Min  # Cambiar el turno al gato
+            self.ai_move  # Mover el gato inmediatamente después del ratón
 
     def ai_move(self):
         best_val = float("inf")
         best_move = None
         for action in self.get_actions(self.board, self.cat_pos):
             new_board = self.result(self.board, action, self.Min)
-            move_val = self.minimax(new_board, True)
+            move_val = self.minimax(new_board, True, action)
             if move_val < best_val:
                 best_val = move_val
                 best_move = action
@@ -55,6 +56,9 @@ class MouseCatGame:
 
             if self.check_winner(self.cat_pos, self.Min):
                 self.show_winner(self.Min)
+                return
+
+        self.turn = self.Max  # Cambiar el turno al ratón
 
     def is_valid_move(self, start, end):
         # Verificar si el movimiento es adyacente (arriba, abajo, izquierda, derecha)
@@ -101,25 +105,35 @@ class MouseCatGame:
             max_value = float("-inf")
             for action in self.get_actions(board, self.mouse_pos):
                 new_board = self.result(board, action, self.Max)
-                value = self.minimax(new_board, False)
+                value = self.minimax(new_board, False, action)
                 max_value = max(max_value, value)
             return max_value
-
         else:
             min_value = float("inf")
             for action in self.get_actions(board, self.cat_pos):
                 new_board = self.result(board, action, self.Min)
-                value = self.minimax(new_board, True)
+                value = self.minimax(new_board, True, action)
+                # Agregamos la heurística para minimizar la distancia entre el gato y el ratón
+                distance = abs(action[0] - self.mouse_pos[0]) + abs(action[1] - self.mouse_pos[1])
+                value -= distance
                 min_value = min(min_value, value)
             return min_value
 
     def update_buttons(self):
         for i in range(3):
             for j in range(3):
-                self.buttons[i][j].config(text=self.board[i][j])
+                if self.board[i][j] == self.Max:
+                    self.buttons[i][j].configure(image=self.mouse_image)
+                elif self.board[i][j] == self.Min:
+                    self.buttons[i][j].configure(image=self.cat_image)
+                else:
+                    self.buttons[i][j].configure(image=None)  # No hay imagen en esta posición
+                self.buttons[i][j].image = self.buttons[i][j].cget("image")  # Actualiza la imagen
+
 
 if __name__ == "__main__":
     root = tk.Tk()
     game = MouseCatGame(root)
     root.mainloop()
+
 
