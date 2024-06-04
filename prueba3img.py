@@ -7,34 +7,49 @@ class MouseCatGame:
         self.board = [[' ' for _ in range(3)] for _ in range(3)]
         self.buttons = [[None for _ in range(3)] for _ in range(3)]
         self.Max = "R"  # Representamos al ratón con 'R'
-        self.Min = "G"   # Representamos al gato con 'G'
+        self.Min = "G"  # Representamos al gato con 'G'
         self.mouse_pos = (0, 0)  # El ratón comienza en la esquina superior izquierda
-        self.cat_pos = (2, 2)    # El gato comienza en la esquina inferior derecha
-        self.load_images()  # Cargar imágenes del ratón y el gato
-        self.board[self.mouse_pos[0]][self.mouse_pos[1]] = self.mouse_image
-        self.board[self.cat_pos[0]][self.cat_pos[1]] = self.cat_image
-        self.create_board()
+        self.cat_pos = (2, 2)  # El gato comienza en la esquina inferior derecha
 
-    def load_images(self):
-        self.mouse_image = ImageTk.PhotoImage(Image.open("mouse.png"))  # Carga la imagen del ratón
-        self.cat_image = ImageTk.PhotoImage(Image.open("cat.png"))      # Carga la imagen del gato
+        # Cargar imágenes
+        self.mouse_image_orig = Image.open("mouse.png")
+        self.cat_image_orig = Image.open("cat.png")
+
+        # Crear el tablero y luego ajustar el tamaño de las imágenes
+        self.create_board()
+        self.adjust_images()
+        self.update_buttons()
+
+        # Ajustar el tamaño de la ventana para que se vea todo el tablero
+        self.root.geometry("180x180")  # Ajusta según el tamaño del tablero y los botones
 
     def create_board(self):
         for i in range(3):
             for j in range(3):
-                self.board[i][j] = None  # Inicializa las casillas como vacías
-                button = tk.Button(self.root, width=50, height=50,
-                               command=lambda i=i, j=j: self.on_button_click(i, j))
-                button.grid(row=i, column=j)
+                button = tk.Button(self.root, width=5, height=5, command=lambda i=i, j=j: self.on_button_click(i, j))
+                button.grid(row=i, column=j, sticky='nsew')
                 self.buttons[i][j] = button
-        self.update_buttons()  # Actualiza los botones después de crearlos
 
+        # Ajustar las filas y columnas para que tengan el mismo tamaño
+        for i in range(3):
+            self.root.grid_rowconfigure(i, weight=1)
+            self.root.grid_columnconfigure(i, weight=1)
+
+    def adjust_images(self):
+        button_size = 60  # Ajusta el tamaño del botón
+
+        # Redimensionar las imágenes al tamaño de los botones
+        self.mouse_image = ImageTk.PhotoImage(self.mouse_image_orig.resize((button_size, button_size), Image.LANCZOS))
+        self.cat_image = ImageTk.PhotoImage(self.cat_image_orig.resize((button_size, button_size), Image.LANCZOS))
+
+        self.board[self.mouse_pos[0]][self.mouse_pos[1]] = self.mouse_image
+        self.board[self.cat_pos[0]][self.cat_pos[1]] = self.cat_image
 
     def on_button_click(self, i, j):
         if self.board[i][j] == ' ' and self.is_valid_move(self.mouse_pos, (i, j)):
             self.board[self.mouse_pos[0]][self.mouse_pos[1]] = ' '
             self.mouse_pos = (i, j)
-            self.board[i][j] = self.Max
+            self.board[i][j] = self.mouse_image
             self.update_buttons()  # Actualiza los botones después del movimiento del ratón
 
             if self.check_winner(self.mouse_pos, self.Max):
@@ -55,7 +70,7 @@ class MouseCatGame:
         if best_move:
             self.board[self.cat_pos[0]][self.cat_pos[1]] = ' '
             self.cat_pos = best_move
-            self.board[self.cat_pos[0]][self.cat_pos[1]] = self.Min
+            self.board[self.cat_pos[0]][self.cat_pos[1]] = self.cat_image
             self.update_buttons()
 
             if self.check_winner(self.cat_pos, self.Min):
@@ -123,18 +138,19 @@ class MouseCatGame:
     def update_buttons(self):
         for i in range(3):
             for j in range(3):
-                if self.board[i][j] == self.Max:
-                    self.buttons[i][j].configure(image=self.mouse_image)
-                elif self.board[i][j] == self.Min:
-                    self.buttons[i][j].configure(image=self.cat_image)
+                if self.board[i][j] == ' ':
+                    self.buttons[i][j].config(image='', text='', width=60, height=60)
                 else:
-                    self.buttons[i][j].configure(image=None, text='')  # Casilla vacía
-
+                    self.buttons[i][j].config(image=self.board[i][j], text='', width=60, height=60)
 
 if __name__ == "__main__":
     root = tk.Tk()
     game = MouseCatGame(root)
     root.mainloop()
+
+
+
+
 
 
 
