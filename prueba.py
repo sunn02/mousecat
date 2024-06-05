@@ -52,14 +52,27 @@ class MouseCatGame:
                     self.root.after(500, self.ai_move)  # Espera medio segundo antes del movimiento del gato
 
     def ai_move(self):
+        # Primero, verifica si el gato puede moverse directamente al ratón
+        for move in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            new_pos = (self.cat_pos[0] + move[0], self.cat_pos[1] + move[1])
+            if new_pos == self.mouse_pos:
+                self.board[self.cat_pos[0]][self.cat_pos[1]] = ' '
+                self.cat_pos = new_pos
+                self.board[self.cat_pos[0]][self.cat_pos[1]] = self.Min
+                self.update_buttons()
+                self.show_winner(self.Min)
+                return
+
+        # Si no puede atrapar al ratón inmediatamente, utiliza el algoritmo Minimax para decidir el siguiente movimiento
         best_val = float("-inf")
         best_move = None
         for action in self.get_actions(self.board, self.cat_pos):
             new_board = self.result(self.board, action, self.Min)
-            move_val = self.minimax(new_board, True)
+            move_val = self.minimax(new_board, True, 0)
             if move_val > best_val:
                 best_val = move_val
                 best_move = action
+
         if best_move:
             self.board[self.cat_pos[0]][self.cat_pos[1]] = ' '
             self.cat_pos = best_move
@@ -105,24 +118,26 @@ class MouseCatGame:
         new_board[action[0]][action[1]] = player
         return new_board
 
-    def minimax(self, board, max_turn):
+    def minimax(self, board, max_turn, depth):
         if self.check_winner(self.mouse_pos, self.Max):
             return 1
         if self.check_winner(self.cat_pos, self.Min):
             return -1
+        if depth >= 3:  # Limitar la profundidad a 3 niveles
+            return 0
 
         if max_turn:
             max_value = float("-inf")
             for action in self.get_actions(board, self.mouse_pos):
                 new_board = self.result(board, action, self.Max)
-                value = self.minimax(new_board, False)
+                value = self.minimax(new_board, False, depth + 1)
                 max_value = max(max_value, value)
             return max_value
         else:
             min_value = float("inf")
             for action in self.get_actions(board, self.cat_pos):
                 new_board = self.result(board, action, self.Min)
-                value = self.minimax(new_board, True)
+                value = self.minimax(new_board, True, depth + 1)
                 min_value = min(min_value, value)
             return min_value
 
@@ -137,9 +152,12 @@ class MouseCatGame:
                     self.buttons[i][j].config(image='')
 
 if __name__ == "__main__":
+    
     root = tk.Tk()
     game = MouseCatGame(root)
     root.mainloop()
+
+
 
 
 
