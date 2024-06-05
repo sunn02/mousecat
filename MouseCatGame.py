@@ -129,7 +129,7 @@ class MouseCatGame:
             for action in self.get_actions(board, self.cat_pos):
                 new_board = self.result(board, action, self.Min)
                 value = self.minimax(new_board, True)
-                # Agregamos la heurística para minimizar la distancia entre el gato y el ratón
+                # minimizar la distancia entre el gato y el ratón
                 distance = abs(action[0] - self.mouse_pos[0]) + abs(action[1] - self.mouse_pos[1])
                 value -= distance
                 min_value = min(min_value, value)
