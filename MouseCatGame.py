@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 # Variables 
-board_size = 4  
+board_size = 7
 board = [[' ' for _ in range(board_size)] for _ in range(board_size)]
 buttons = [[None for _ in range(board_size)] for _ in range(board_size)]
 mouse_pos = (0, 0) 
@@ -139,7 +139,7 @@ def minimax(board, max_turn, depth):
         max_value = float("-inf")
         for action in get_actions(board, mouse_pos):
             new_board = result(board, action, Max)
-            value = minimax(new_board, False, depth + 1)
+            value = minimax(new_board, False, depth + 1) #recursividad
             max_value = max(max_value, value)
         return max_value
     else:
